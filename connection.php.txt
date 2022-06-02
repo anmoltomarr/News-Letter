@@ -1,0 +1,13 @@
+<?php 
+
+
+  $host='localhost';
+  $uname='root';
+  $pass='';
+  $db='subscriber';
+
+  $con=mysqli_connect($host,$uname,$pass,$db);
+
+?>
+
+

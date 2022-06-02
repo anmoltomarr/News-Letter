@@ -1,0 +1,141 @@
+<?php 
+require 'connection.php';
+require 'config.php';
+
+if(isset($_GET['email']) && isset($_GET['v_code']))
+{
+
+  $_GET['email']=mysqli_real_escape_string($con,$_GET['email']);
+  $_GET['v_code']=mysqli_real_escape_string($con,$_GET['v_code']);
+  $email=$_GET['email'];
+  $vc=$_GET['v_code'];
+
+  $query="SELECT * FROM `users` WHERE `email`='$email' AND `v_code`='$vc' LIMIT 1";
+  $result=mysqli_query($con,$query);
+  if($result)
+  {
+    if(mysqli_num_rows($result)==1)
+    {
+      $result_fetch=mysqli_fetch_assoc($result);
+      if($result_fetch['is_verified']==0)
+      {
+        $update="UPDATE `users` SET `is_verified`='1',`subscribed`='1' WHERE `email`='$result_fetch[email]'";
+        if(mysqli_query($con,$update))
+        {
+          sendmail(($_GET['email']),($_GET['v_code']));
+          echo'
+            <script>
+              alert("Email verification complete. Check subscription email");
+              window.location.href="index.php";
+            </script>
+          ';
+        }
+        else{
+          echo'
+            <script>
+              alert("Server Down");
+              window.location.href="index.php";
+            </script>
+          ';          
+        }
+      }
+      else{
+        echo'
+          <script>
+            alert("Email is already verified");
+            window.location.href="index.php";
+          </script>
+        ';
+      }
+    }
+    else{
+      echo'
+        <script>
+          alert("Invalid Email or Verification code");
+          window.location.href="index.php";
+        </script>
+      ';
+    }
+  }
+}
+
+function sendmail($e,$vcode)
+{
+  $url='https://c.xkcd.com/random/comic/';
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $url);
+  curl_setopt($ch, CURLOPT_HEADER, true);
+  curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  $a = curl_exec($ch); 
+  $url = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+
+  $file = file_get_contents($url.'info.0.json');
+  $file = json_decode($file,true);
+  $img = $file['img'];
+
+  //save file in a folder named 'images'
+
+  $save_to="images/".random_int(111111,9999999).".png";
+  $ch2 = curl_init($img);
+  curl_setopt($ch2,CURLOPT_HEADER,0);
+  curl_setopt($ch2,CURLOPT_RETURNTRANSFER,1);
+  curl_setopt($ch2,CURLOPT_BINARYTRANSFER,1);
+  $raw = curl_exec($ch2);
+  curl_close($ch2);
+
+  $fp = fopen($save_to,'x');
+  fwrite($fp,$raw);
+
+  $file = $save_to;
+
+  //sendmail 
+  $from=$GLOBALS['from'];
+  $to = "$e";
+  $subject = 'Xkcd';
+  $message = ' 
+  <img src="'.$img .'"><br> <br>
+    <a href="'.$GLOBALS['host'].'/unsubscribe.php?email='.$e.'&v_code='.$vcode.'">Click here to Unsubscribe</a>';
+  
+  // prepare mail head and body 
+  
+  $content = file_get_contents($file);
+  $content = chunk_split(base64_encode($content));
+
+  // a random hash will be necessary to send mixed content
+  $separator = md5(time());
+
+  // carriage return type 
+  $eol = '\r\n';
+
+  // main header (multipart)
+  $headers =  'From: '.$from. $eol;
+  $headers .= 'MIME-Version: 1.0' . $eol;
+  $headers .= 'Content-Type: multipart/mixed; boundary=\"' . $separator . '\"' . $eol;
+  $headers .= 'Content-Transfer-Encoding: 7bit' . $eol;
+   
+  // message
+  $body = '--' . $separator . $eol;
+  $body .= 'Content-Type: text/html; charset=\"UTF-8\"' . $eol;
+  $body .= 'Content-Transfer-Encoding: 7bit' . $eol;
+  $body .= $message . $eol;
+
+  // attachment
+  $body .= '--' . $separator . $eol;
+  $body .= 'Content-Type: application/octet-stream; name=\"' . $file . '\"' . $eol;
+  $body .= 'Content-Transfer-Encoding: base64'. $eol;
+  $body .= 'Content-Disposition: attachment' . $eol;
+  $body .= $content . $eol;
+  $body .= '--' . $separator . '--';
+
+//send mail with attachment
+$sendmail=mail($to, $subject, $body, $headers);
+
+if ($sendmail) {
+    echo 'Mail sent successfully.';
+} else {
+    echo 'Unable to send mail.';
+}
+}
+
+?>

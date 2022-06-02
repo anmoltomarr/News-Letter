@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup page</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        form{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            background-color: lightseagreen;
+            width: 400px;
+            padding: 30px 20px;
+            border-radius: 5px;
+        }
+        form label{
+            display: block;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        form input{
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 20px;
+        }
+        div.btn{
+            text-align: center;
+        }
+        div.btn button{
+            padding: 5px 10px;
+            background-color: darkslategrey;
+            color: white;
+            border: 2px  solid black;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <form method="post" action="subscribe.php">
+        <div class="outer-box">
+            <div>
+                <label for="name">Name</label>
+                <input id="name" type="text" name="Name">
+            </div>
+            <div>
+                <label for="email">Email</label>
+                <input id="email" type="email" name="Email">
+            </div>
+            <div class="btn">
+                <button type="submit" name="submit">SUBMIT</button>
+            </div>
+        </div>
+    </form>
+
+</body>
+
+</html>

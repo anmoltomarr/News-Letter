@@ -1,0 +1,59 @@
+<?php 
+
+require 'connection.php';
+
+if(isset($_GET['email']) && isset($_GET['v_code']))
+{
+  $_GET['email']=mysqli_real_escape_string($con,$_GET['email']);
+  $_GET['v_code']=mysqli_real_escape_string($con,$_GET['v_code']);
+  $email=$_GET['email'];
+  $vc=$_GET['v_code'];
+
+  $query="SELECT * FROM `users` WHERE `email`='$email' AND `v_code`='$vc' LIMIT 1";
+  $result=mysqli_query($con,$query);
+  if($result)
+  {
+    if(mysqli_num_rows($result)==1)
+    {
+      $result_fetch=mysqli_fetch_assoc($result);
+      if($result_fetch['is_verified']==1)
+      {
+        $update="UPDATE `users` SET `subscribed`='0' WHERE `email`='$result_fetch[email]'";
+        if(mysqli_query($con,$update)){
+          echo'
+            <script>
+              alert("You have been unsubscribed");
+              window.location.href="index.php";
+            </script>
+          ';
+        }
+        else{
+          echo'
+            <script>
+              alert("Server Down");
+              window.location.href="index.php";
+            </script>
+          ';          
+        }
+      }
+      else{
+        echo'
+          <script>
+            alert("Email is not verified");
+            window.location.href="index.php";
+          </script>
+        ';
+      }
+    }
+    else{
+      echo'
+        <script>
+          alert("Invalid Email or Verification code");
+          window.location.href="index.php";
+        </script>
+      ';
+    }
+  }
+}
+
+?>

@@ -1,0 +1,93 @@
+<?php
+require 'connection.php';
+require 'config.php';
+
+function sendmail($n,$e,$vc)
+{
+  $from=$GLOBALS['from'];
+  $to = "$e";
+  $subject = 'Email verification Link';
+  $message = ' Thanks for registration! <br>
+    Click the link below to verify your account <br>
+    <a href="'.$GLOBALS['host'].'/verify.php?email='.$e.'&v_code='.$vc.'">Click here to Verify</a>';
+
+  $headers = 'From: '.$from.'\r\n';
+  $headers .= 'Reply-To: '.$from.'\r\n';
+  $header .= 'MIME-Version: 1.0\r\n';
+  $header .='Content-Type: text/html; charset=\"UTF-8\"'.'\r\n';
+  
+
+  $sendmail=mail($to, $subject, $message, $header);
+  if($sendmail) {
+    return true;    
+  }else {
+    return false;
+  }
+}
+
+if(isset($_POST['submit']) && isset($_POST['Name']) && isset($_POST['Email']))
+{
+  $name = htmlspecialchars($_POST['Name']); //escapes special chars prevents cross site scripting
+  $name = mysqli_real_escape_string($con, $_POST['Name']);  //sql prevention
+
+  $_POST['Email'] = mysqli_real_escape_string($con, $_POST['Email']);
+  $email=$_POST['Email'];
+
+  if (!filter_input(INPUT_POST, $_POST['Email'], FILTER_VALIDATE_EMAIL)) {
+    echo'
+    <script>
+      alert("E-Mail is invalid!");
+      window.location.href="index.php";
+    </script>
+    ';
+    exit;
+  }
+
+  //check user exists or not
+  $user_exist="SELECT * FROM `users` WHERE `email`='$email'";
+  $result=mysqli_query($con,$user_exist);
+  if(mysqli_num_rows($result)>0)
+  {
+    echo'
+    <script>
+      alert("E-mail already registered");
+      window.location.href="index.php";
+    </script>
+    ';
+    exit;
+  }
+  else
+  {
+    $v_code=bin2hex(random_bytes(16));
+    $query="INSERT INTO `users`(`name`, `email`, `v_code`, `is_verified`,`subscribed`) VALUES ('$name','$email','$v_code','0','0')";
+
+    if(mysqli_query($con,$query) && sendmail($name,$email,$v_code))
+    {
+      echo'
+        <script>
+          alert("Verify your email. Email verification link sent!");
+          window.location.href="index.php";
+        </script>
+      ';
+    }
+    else{
+      echo'
+        <script>
+          alert("Invalid email or Server Down!");
+          window.location.href="index.php";
+        </script>
+      ';
+    }
+  }
+
+}
+else{
+  echo'
+  <script>
+    window.location.href="index.php";
+  </script>
+  ';
+  exit;
+}
+
+?>

@@ -1,0 +1,6 @@
+<?php 
+
+$from = "anmoltomarecom@gmail.com";
+$name="Anmol Tomar";
+
+?>
